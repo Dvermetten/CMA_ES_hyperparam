@@ -43,9 +43,9 @@ def main():
     elif len(sys.argv) == 10:
         fid = int(sys.argv[1])
         dim = int(sys.argv[2])
-        conf_nr= int(sys.argv[3])
-        iids = list(sys.argv[4])
-        reps = list(sys.argv[5])
+        conf_nr = int(sys.argv[3])
+        iids = sys.argv[4].split(',')
+        reps = sys.argv[5].split(',')
         c1 = double(sys.argv[6])
         cc = double(sys.argv[7])
         cmu = double(sys.argv[8])
