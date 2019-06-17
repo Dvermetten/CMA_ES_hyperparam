@@ -160,7 +160,7 @@ def single_split_with_hyperparams_parallel(fid, dim, rep1, rep2, split_idx, reco
         :param rep2: The configuration to run after the splitpoint
         :param split_idx: The splitpoint-index at which to switch between rep1 and rep2
         :param iids: The instances of the bbob-function to run
-        :param num_reps: The amount of repetitions to run
+        :param num_reps: The amount of repetitions to run. Can also be a list of the repetition numbers.
         :param record_runs: Whether or not to record a .dat-file during the runs of the CMA-ES
         :param hyperparams: Dictionary of the hyperparameters to use for C1
         :param hyperparams2: Dictionary of the hyperparameters to use for C2
@@ -172,7 +172,11 @@ def single_split_with_hyperparams_parallel(fid, dim, rep1, rep2, split_idx, reco
     runFunction = partial(single_split_hyperparam_single, fid=fid, split_idx=split_idx, dim=dim, target_idx=target_idx,
                           record_runs=record_runs, rep1=rep1, rep2=rep2, hyperparams=hyperparams, budget=budget,
                           hyperparams2=hyperparams2, lambda_=lambda_, lambda2_=lambda2_, opt_split=opt_split)
-    arguments = list(product(iids, range(num_reps)))
+    if not isinstance(num_reps, list):
+        reps = range(num_reps)
+    else:
+        reps = num_reps
+    arguments = list(product(iids, reps))
     run_data = runParallelFunction(runFunction, arguments)
     if opt_split:
         used_split, split_hit, used_budgets, hits = zip(*run_data)

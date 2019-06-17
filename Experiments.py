@@ -261,5 +261,22 @@ def run_exp_larger(nr):
     single_split_with_hyperparams_parallel(12, 5, int(vals), int(vals), 51, False, 51,
                                                          [1, 2, 3, 4, 5], 50, None, 50000, None, None, None, True)
 
+"""
+    Interface function to the parallell execution of CMA-ES
 
-
+    :param fid: The function id (from bbob)
+    :param dim: The dimension to run the bbob-problem in
+    :param conf_nr: The number of the configuration to run
+    :param iids: The instances of the bbob-function to run
+    :param reps: The amount of repetitions to run. Can also be a list of the repetition numbers (seeds).
+    :param c1: Value for the c_1 hyperparameter
+    :param cc: Value for the c_c hyperparameter
+    :param cmu: Value for the c_mu hyperparameter
+    :param budget: Maximum number of evaluations per run
+    :param target_idx: Custom target-index to stop the optimization (distance 10^(2-target_idx/5))
+    :return: The ERT over all 'reps' runs on all instances in iids
+"""
+def runStaticWithHyperparameter(fid, dim, conf_nr, iids, reps, c1, cc, cmu, budget):
+    single_split_with_hyperparams_parallel(fid, dim, int(conf_nr), int(conf_nr), target_idx = 51, iids = iids,
+                                           num_reps = reps, params = {'c_1': c1, 'c_c': cc, 'c_mu': cmu},
+                                           budget = budget)

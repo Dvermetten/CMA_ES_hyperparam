@@ -1,0 +1,12 @@
+.idea/*
+__pycache__/*
+venv
+exdata
+src/local.py
+src/__pycache__
+BayesOpt/__pycache__
+BayesOpt/__pycache__/*
+*.pyc
+Data/*
+*.pyc
+*.dat
