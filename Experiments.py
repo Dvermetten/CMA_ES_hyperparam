@@ -12,7 +12,7 @@ from src.fitnessFunction import fitnessFunc
 from src.local import datapath_npy, datapath
 from src.Utils import create_observer, get_target, runParallelFunction, get_default_hyperparameter_values
 from src.hyperparameterOptimizer import hyperparameterOptimizer
-from src.Algorithms import single_split_with_hyperparams_parallel
+from src.Algorithms import single_split_with_hyperparams_parallel, single_split_hyperparam_single
 '''
 Example functions for running small experiments
 '''
@@ -277,6 +277,10 @@ def run_exp_larger(nr):
     :return: The ERT over all 'reps' runs on all instances in iids
 """
 def runStaticWithHyperparameter(fid, dim, conf_nr, iids, reps, c1, cc, cmu, budget):
-    single_split_with_hyperparams_parallel(fid, dim, int(conf_nr), int(conf_nr), target_idx = 51, iids = iids,
-                                           num_reps = reps, params = {'c_1': c1, 'c_c': cc, 'c_mu': cmu},
-                                           budget = budget)
+    return (single_split_hyperparam_single(fid = fid, dim = dim, rep1 = conf_nr, rep2 = conf_nr, target_idx = 51, iid = iids,
+                                       rep_nr = reps, hyperparams = {'c_1': c1, 'c_c': cc, 'c_mu': cmu},
+                                       budget = budget, split_idx = 51))
+    # else:
+    #     single_split_with_hyperparams_parallel(fid, dim, int(conf_nr), int(conf_nr), target_idx = 51, iids = iids,
+    #                                        num_reps = reps, hyperparams = {'c_1': c1, 'c_c': cc, 'c_mu': cmu},
+    #                                        budget = budget, split_idx = 51)

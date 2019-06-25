@@ -8,7 +8,7 @@ from Experiments import runSingleSplitExample, runStaticExample, run_hyperparame
     single_param_experiment, run_ranking_test, run_ranking_test_lambda, run_exp_larger, runStaticWithHyperparameter
 from src.Algorithms import single_split_with_hyperparams_parallel
 import warnings
-
+import argparse
 
 def runDefault():
     # run_hyperparameter_optimization_example()
@@ -40,18 +40,40 @@ def main():
     if len(sys.argv) == 2:
         print("running index: {0}".format(sys.argv[1]))
         run_experiment(int(sys.argv[1]))
-    elif len(sys.argv) == 10:
-        fid = int(sys.argv[1])
-        dim = int(sys.argv[2])
-        conf_nr = int(sys.argv[3])
-        iids = sys.argv[4].split(',')
-        reps = sys.argv[5].split(',')
-        c1 = double(sys.argv[6])
-        cc = double(sys.argv[7])
-        cmu = double(sys.argv[8])
-        budget = int(sys.argv[9])
-        return runStaticWithHyperparameter(fid, dim, conf_nr, iids, reps, c1, cc, cmu, budget)
+    elif len(sys.argv) >= 10:
+        parser = argparse.ArgumentParser(description="Run static CMA-ES configuration")
+        parser.add_argument('--fid', dest='fid', type=int)
+        parser.add_argument('--dim', dest='dim', type=int)
+        parser.add_argument('--conf_nr', dest='conf_nr', type=int)
+        parser.add_argument('--iids', dest='iids', type=int)
+        parser.add_argument('--reps', dest='reps', type=int)
+        parser.add_argument('--budget', dest='budget', type=int)
+        parser.add_argument('--c1', dest='c1', type=float)
+        parser.add_argument('--cc', dest='cc', type=float)
+        parser.add_argument('--cmu', dest='cmu', type=float)
+
+        # fid = int(sys.argv[1])
+        # dim = int(sys.argv[2])
+        # conf_nr= int(sys.argv[3])
+        # iids = list(sys.argv[4])
+        # reps = list(sys.argv[5])
+        # c1 = double(sys.argv[6])
+        # cc = double(sys.argv[7])
+        # cmu = double(sys.argv[8])
+        # budget = int(sys.argv[9])
+        args = parser.parse_args()
+        print(args)
+        # print("Running with parameters: ")
+        # print(args.fid, args.dim, args.conf_nr, args.iids, args.reps,
+        #                                    args.c1, args.cc, args.cmu, args.budget)
+        rt = runStaticWithHyperparameter(args.fid, args.dim, args.conf_nr, args.iids, args.reps,
+                                           args.c1, args.cc, args.cmu, args.budget)[0]
+        print(rt)
+        return rt
     else:
+        print("Running default example")
+        print(len(sys.argv))
+        print(sys.argv)
         runDefault()
 
 
