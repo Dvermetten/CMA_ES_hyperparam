@@ -11,7 +11,7 @@ from src.Adaptive_CMAES import StaticCMA, SingleSplitCMAES
 from src.fitnessFunction import fitnessFunc
 from src.local import datapath_npy, datapath
 from src.Utils import create_observer, get_target, runParallelFunction, get_default_hyperparameter_values
-from src.hyperparameterOptimizer import hyperparameterOptimizer
+from src.hyperparameterOptimizer import hyperparameterOptimizer, OneSearchSpaceOptimizer
 from src.Algorithms import single_split_with_hyperparams_parallel, single_split_hyperparam_single
 '''
 Example functions for running small experiments
@@ -218,18 +218,18 @@ def run_bipop_test():
     h(20, 5, 2, 2, 51, [1, 2, 3, 4], 4, 50000, 51, None, 0, True)
 
 
-def run_ranking_test(fid = 12, confs = [0,1]):
-    results = []
-    configs = np.load(f"{datapath_npy}Statics_F{fid}_mid_new.npy")
+def run_ranking_test(fid = 6, confs = [0,1]):
+    # results = []
+    # configs = np.load(f"{datapath_npy}Statics_F{fid}_mid_new.npy")
     params_full = ['c_1', 'c_c', 'c_mu']
     optimizer0 = hyperparameterOptimizer(params=params_full, n_init_sample=20, max_iter=180, part_to_optimize=-1)
-    for config in configs[confs]:
+    for config in [2166]:
         print(config)
         open(f"{datapath}Data_Full/F{fid}_rep{config}.csv", 'w').close()
         res0 = optimizer0(fid, 5, config, config, 20, target_idx=51, budget=25000, num_reps=5,
-                          data_file=f"{datapath}Data/F{fid}_st_{config}", opt_split=True)
-        results.append((config,  res0))
-    np.save(f"{datapath}F{fid}_static_{confs[0]}_to_{confs[-1]}.npy", results)
+                          data_file=f"{datapath}Data/F{fid}_st_{config}", opt_split=False)
+        #results.append((config,  res0))
+    #np.save(f"{datapath}F{fid}_static_{confs[0]}_to_{confs[-1]}.npy", results)
 
 
 def run_ranking_test_lambda(fid = 21, confs_nr = 0):
@@ -251,15 +251,15 @@ def run_ranking_test_lambda(fid = 21, confs_nr = 0):
 
 def run_exp_larger(nr):
     # for i in range((4 * nr), 4 * (nr + 1)):
-    vals = np.load(f"{datapath_npy}F12_new.npy")[nr]
-    # params = {}
-    # params['c_1'] = vals[1]
-    # params['c_c'] = vals[2]
-    # params['c_mu'] = vals[3]
-    # opt_par = single_split_with_hyperparams_parallel(21, 5, int(vals[0]), int(vals[0]), 51, False, 51,
-    #                                                  [1, 2, 3, 4, 5], 50, params, 25000, params, None, None, False)
-    single_split_with_hyperparams_parallel(12, 5, int(vals), int(vals), 51, False, 51,
-                                                         [1, 2, 3, 4, 5], 50, None, 50000, None, None, None, True)
+    # vals = np.load(f"{datapath_npy}F12_new.npy")[nr]
+    params = {}
+    params['c_1'] = 0.0669
+    params['c_c'] = 1.0000
+    params['c_mu'] = 0.0000
+    opt_par = single_split_with_hyperparams_parallel(6, 5, 2166, 2166, 51, False, 51,
+                                                     [1,2,3,4,5], 50, params, 25000, params, None, None, False)
+    # single_split_with_hyperparams_parallel(12, 5, int(vals), int(vals), 51, False, 51,
+    #                                                      [1, 2, 3, 4, 5], 50, None, 50000, None, None, None, True)
 
 """
     Interface function to the parallell execution of CMA-ES
@@ -276,11 +276,54 @@ def run_exp_larger(nr):
     :param target_idx: Custom target-index to stop the optimization (distance 10^(2-target_idx/5))
     :return: The ERT over all 'reps' runs on all instances in iids
 """
-def runStaticWithHyperparameter(fid, dim, conf_nr, iids, reps, c1, cc, cmu, budget):
-    return (single_split_hyperparam_single(fid = fid, dim = dim, rep1 = conf_nr, rep2 = conf_nr, target_idx = 51, iid = iids,
+def runStaticWithHyperparameter(fid, dim, conf_nr, iids, reps, c1, cc, cmu, budget, target):
+    if target < 0:
+        target = np.load(f"{datapath}targets.npy")[fid-1]
+    return (single_split_hyperparam_single(fid = fid, dim = dim, rep1 = conf_nr, rep2 = conf_nr, target_idx = target, iid = iids,
                                        rep_nr = reps, hyperparams = {'c_1': c1, 'c_c': cc, 'c_mu': cmu},
                                        budget = budget, split_idx = 51))
     # else:
     #     single_split_with_hyperparams_parallel(fid, dim, int(conf_nr), int(conf_nr), target_idx = 51, iids = iids,
     #                                        num_reps = reps, hyperparams = {'c_1': c1, 'c_c': cc, 'c_mu': cmu},
     #                                        budget = budget, split_idx = 51)
+
+def run_one_search_space(fid, target, budget):
+    if target < 1:
+        target = np.load(f"{datapath}targets.npy")[fid-1]
+    opt = OneSearchSpaceOptimizer(n_init_sample=10, max_iter=75)
+    opt(fid, target, budget, data_file=f"{datapath}Data_onesearch/F{fid}_one")
+
+def rerun_configs(nr):
+    data = np.load(f"{datapath_npy}rerun_confs_def.npy")
+    targets = np.load(f"{datapath_npy}targets.npy")
+    # erts_def = []
+    params_full = ['c_1', 'c_c', 'c_mu']
+    for (fid, conf) in data[nr*2:(1+nr)*2]:
+        fid = int(fid)
+        conf = int(conf)
+        print(fid, conf)
+        target_idx = targets[fid - 1]
+        optimizer0 = hyperparameterOptimizer(params=params_full, n_init_sample=20, max_iter=180, part_to_optimize=-1)
+        optimizer0(fid, 5, conf, conf, 51, target_idx=target_idx, budget=25000,
+                   num_reps=5, data_file=f"{datapath}Data_mip/F{fid}_best_mip_{conf}")
+        # ert = single_split_with_hyperparams_parallel(fid, 5, conf, conf, target_idx, False, target_idx,
+        #                                              [1, 2, 3, 4, 5], 50, None, 25000, None, None, None, False)
+        # print(ert)
+        # erts_def.append(ert)
+    # np.save(f"{datapath_npy}default_erts_per_fid", erts_def)
+    # erts_mip_ego = []
+    # data2 = np.load(f"{datapath_npy}rerun_confs_irace2.npy")
+    # for (fid, conf, c1, cc, cmu) in data2:
+    #     fid = int(fid)
+    #     conf = int(conf)
+    #     print(fid,conf)
+    #     target_idx = targets[fid-1]
+    #     params = {}
+    #     params['c_1'] = c1
+    #     params['c_c'] = cc
+    #     params['c_mu'] = cmu
+    #     ert = single_split_with_hyperparams_parallel(fid, 5, conf, conf, target_idx, False, target_idx,
+    #                                            [1, 2, 3, 4, 5], 50, params, 25000, params, None, None, False)
+    #     print(ert)
+    #     erts_mip_ego.append(ert)
+    # np.save(f"{datapath_npy}irace_erts_per_fid_partial2", erts_mip_ego)

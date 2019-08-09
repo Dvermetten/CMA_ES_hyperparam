@@ -9,9 +9,10 @@ from GaussianProcess import GaussianProcess
 from GaussianProcess.trend import constant_trend
 from BayesOpt import BO
 from BayesOpt.Surrogate import RandomForest
-from BayesOpt.SearchSpace import ContinuousSpace, OrdinalSpace, ProductSpace
+from BayesOpt.SearchSpace import ContinuousSpace, OrdinalSpace, ProductSpace, NominalSpace
 from src.Algorithms import single_split_with_hyperparams_parallel
 from src.Utils import get_default_hyperparameter_values
+from modea.Utils import reprToInt
 
 
 class hyperparameterOptimizer():
@@ -177,3 +178,88 @@ class hyperparameterOptimizer():
             self.ub = ub
         else:
             self.ub = [(get_default_hyperparameter_values(params_cont, 5, 0)[i]+0.1)*2 for i in range(len(params_cont))]
+
+
+class OneSearchSpaceOptimizer:
+    def __init__(self, max_iter=None, n_init_sample=None,
+                 eval_budget=None, n_random_start=None, n_point=None):
+        """
+                    Creates a hyperparameter optimizer
+
+                    :param fid: The function id (from bbob)
+                    :param dim: The dimension to run the bbob-problem in
+                    :param rep1: The configuration to run before the splitpoint
+                    :param rep2: The configuration to run after the splitpoint
+                    :param split_idx: The splitpoint-index at which to switch between rep1 and rep2
+                    :param iids: The instances of the bbob-function to run
+                    :param num_reps: The amount of repetitions to run
+                    :param part_to_optimize: Which part of the adaptive configuration to optimize. Can be 1, 2 or -1. The -1
+                    option optimizes both parts, with the same parameter values for both. To better optimize a complete
+                     configuration, first optimize part 1, then part 2 using the optimial value for part1 in the param_val
+                     argument.
+                    :param param_val: The parameter values for the part of the configuration which is not optimized here.
+                    :return: The result of the hyper-parameter optimzation
+                """
+
+        self.params = ['c_1', 'c_c', 'c_mu']#, 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9', 'm10', 'm11']
+        self.dim_hyperparams = len(self.params)
+
+        if max_iter is None:
+            self.max_iter = 1000
+        else:
+            self.max_iter = max_iter
+        if n_init_sample is None:
+            self.n_init_sample = 250
+        else:
+            self.n_init_sample = n_init_sample
+        if eval_budget is None:
+            self.eval_budget = 20
+        else:
+            self.eval_budget = eval_budget
+        if n_random_start is None:
+            self.n_random_start = 5
+        else:
+            self.n_random_start = n_random_start
+        if n_point is None:
+            self.n_point = 1
+        else:
+            self.n_point = n_point
+
+        self.lb = np.zeros((3, 1))
+        self.ub = [0.35,1,0.35]
+        p1 = [[0, 1]] * 9
+        p1.append([0, 1, 2])
+        p1.append([0, 1, 2])
+
+        search_space_nominal = NominalSpace(p1)
+        # search_space_discrete = OrdinalSpace(list(zip([0,0,0,0,0,0,0,0,0,0,0], [2,2,2,2,2,2,2,2,2,3,3])))
+        search_space_cont = ContinuousSpace(list(zip([0,0,0], [0.35,1,0.35])))
+        self.search_space = search_space_cont + search_space_nominal
+
+        self.mean = constant_trend(self.dim_hyperparams, beta=0)
+
+        # autocorrelation parameters of GPR
+        self.thetaL = 1e-10 * (self.ub - self.lb) * np.ones(self.dim_hyperparams)
+        self.thetaU = 2 * (self.ub - self.lb) * np.ones(self.dim_hyperparams)
+        np.random.seed(0)
+        self.theta0 = np.random.rand(self.dim_hyperparams) * (self.thetaU - self.thetaL) + self.thetaL
+
+    def __call__(self, fid, target, budget, dim=5, seed=0, log_file=None, data_file=None, verbose=True):
+
+        def obj_func(x):
+            print(x)
+            conf = reprToInt(x[3:])
+            return single_split_with_hyperparams_parallel(fid, dim, conf, conf, 51,
+                                                          iids=[1,2,3,4,5], num_reps=5,
+                                                          hyperparams=[self.params, x[:3]], hyperparams2=None,
+                                                          budget=budget, target_idx=target)
+
+        model = RandomForest()
+
+        opt = BO(self.search_space, obj_func, model, max_iter=self.max_iter,
+                 n_init_sample=self.n_init_sample, minimize=True, verbose=verbose,
+                 wait_iter=10, random_seed=seed, n_point=self.n_point,
+                 optimizer='MIES', log_file=log_file, data_file=data_file
+                 )
+
+        return opt.run()

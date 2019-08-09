@@ -5,7 +5,8 @@ import sys
 import numpy as np
 from Experiments import runSingleSplitExample, runStaticExample, run_hyperparameter_optimization_example, \
     optimize_hyperparameters_exmperiment2, verify_c2, get_defaults, budget_influence_experiment, run_bipop_test, \
-    single_param_experiment, run_ranking_test, run_ranking_test_lambda, run_exp_larger, runStaticWithHyperparameter
+    single_param_experiment, run_ranking_test, run_ranking_test_lambda, run_exp_larger, runStaticWithHyperparameter, \
+    run_one_search_space, rerun_configs
 from src.Algorithms import single_split_with_hyperparams_parallel
 import warnings
 import argparse
@@ -16,11 +17,13 @@ def runDefault():
     # runStaticExample()
     # optimize_hyperparameters_exmperiment2(12)
     # get_defaults(2)
-    single_split_with_hyperparams_parallel(12,5,1251,1251,20,False,51,[1,2],2,None,25000,None,None,None,True)
+    # single_split_with_hyperparams_parallel(12,5,1251,1251,20,False,51,[1,2],2,None,25000,None,None,None,True)
     # verify_random_seed()
     # verify_c2()
-    # budget_influence_experiment(12, 0)
-    # run_bipop_test()
+    # run_ranking_test()
+    # run_exp_larger(0)
+    # run_one_search_space(12, 51, 25000)
+    rerun_configs()
 
 def run_experiment(nr):
     # run_exp_larger(nr)
@@ -40,7 +43,15 @@ def main():
     if len(sys.argv) == 2:
         print("running index: {0}".format(sys.argv[1]))
         run_experiment(int(sys.argv[1]))
-    elif len(sys.argv) >= 10:
+    elif len(sys.argv) == 7:
+        parser = argparse.ArgumentParser(description="Run static CMA-ES configuration")
+        parser.add_argument('--fid', dest='fid', type=int)
+        parser.add_argument('--target', dest='target', type=int)
+        parser.add_argument('--budget', dest='budget', type=int)
+        args = parser.parse_args()
+        print(args)
+        run = run_one_search_space(args.fid, args.target, args.budget)
+    elif len(sys.argv) >= 16:
         parser = argparse.ArgumentParser(description="Run static CMA-ES configuration")
         parser.add_argument('--fid', dest='fid', type=int)
         parser.add_argument('--dim', dest='dim', type=int)
@@ -51,6 +62,7 @@ def main():
         parser.add_argument('--c1', dest='c1', type=float)
         parser.add_argument('--cc', dest='cc', type=float)
         parser.add_argument('--cmu', dest='cmu', type=float)
+        parser.add_argument('--target', dest='target', type=float)
 
         # fid = int(sys.argv[1])
         # dim = int(sys.argv[2])
@@ -67,7 +79,7 @@ def main():
         # print(args.fid, args.dim, args.conf_nr, args.iids, args.reps,
         #                                    args.c1, args.cc, args.cmu, args.budget)
         rt = runStaticWithHyperparameter(args.fid, args.dim, args.conf_nr, args.iids, args.reps,
-                                           args.c1, args.cc, args.cmu, args.budget)[0]
+                                           args.c1, args.cc, args.cmu, args.budget, args.target)[0]
         print(rt)
         return rt
     else:
