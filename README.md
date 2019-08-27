@@ -1,7 +1,9 @@
 # Data from Master Thesis "Integrating Algorithm Selection and Configuration: A Proof of Concept for the Modular CMA-ES"
 
-This repository contains source code for the experiments described in the thesis. 
-ModEA and COCO need to be installed seperately to run this code.
+Data from experiments can be found [on surfdrive](https://surfdrive.surf.nl/files/index.php/s/dRS0L5NE4XarYYo). 
+To recreate the figures form the thesis, the Jupyter Notebook in the 'Notebooks' folder can be used. Simply download the required data, change the data-location in the notebook, and run the required cells.
 
-The 'Notebooks' Folder contains the code used for post-processing of the data. To use it, download the required data from https://surfdrive.surf.nl/files/index.php/s/dRS0L5NE4XarYYo, 
-and modify the Data_Loc parameter to the location of the data.
+This repository also contains the source code used to run the experiments. 
+The [ModEA](https://github.com/sjvrijn/ModEA) and [COCO](https://github.com/numbbo/coco) packages need to be installed seperately to run this code.
+
+
