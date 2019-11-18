@@ -6,4 +6,4 @@ To recreate the figures form the thesis, the Jupyter Notebook in the 'Notebooks'
 This repository also contains the source code used to run the experiments. 
 The [ModEA](https://github.com/sjvrijn/ModEA) and [COCO](https://github.com/numbbo/coco) packages need to be installed seperately to run this code.
 
-
+A repository containing previous work using modular CMA-ES can be found [here](https://github.com/Dvermetten/Online_CMA-ES_Selection)
